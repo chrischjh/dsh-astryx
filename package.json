@@ -41,5 +41,14 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrischjh/dsh-astryx.git"
+  },
+  "homepage": "https://github.com/chrischjh/dsh-astryx#readme",
+  "bugs": {
+    "url": "https://github.com/chrischjh/dsh-astryx/issues"
+  },
+  "author": "chrischjh"
 }
