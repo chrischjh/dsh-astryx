@@ -70,6 +70,37 @@ test('a spawn failure is reported, not thrown', async () => {
   assert.match(result.error, /ENOENT/)
 })
 
+test('a Windows .cmd command is spawned through a shell with a quoted line', async () => {
+  let plan = null
+  const probe = new McpProbe({
+    platform: 'win32',
+    spawnImpl: (file, args, options) => {
+      plan = { file, args, options }
+      return fakeChild().child
+    },
+  })
+  const result = await probe.probe({ command: 'C:\\Program Files\\npm\\astryx.cmd', args: ['mcp'], retries: 0 })
+  assert.equal(result.ok, true)
+  assert.equal(plan.options.shell, true)
+  assert.deepEqual(plan.args, [])
+  assert.match(plan.file, /^"C:\\Program Files\\npm\\astryx\.cmd" mcp$/)
+})
+
+test('a plain executable is spawned directly on any platform', async () => {
+  let plan = null
+  const probe = new McpProbe({
+    platform: 'linux',
+    spawnImpl: (file, args, options) => {
+      plan = { file, args, options }
+      return fakeChild().child
+    },
+  })
+  await probe.probe({ command: 'astryx', args: ['mcp'], retries: 0 })
+  assert.equal(plan.file, 'astryx')
+  assert.deepEqual(plan.args, ['mcp'])
+  assert.equal(plan.options.shell, undefined)
+})
+
 test('no command means no probe', async () => {
   const probe = new McpProbe()
   const result = await probe.probe({})

@@ -98,3 +98,12 @@ test('without DSH_PROFILE_DIR it picks the profile that owns the package', () =>
   assert.match(files[0], /profiles\/desktop\/node_modules\/dsh-astryx\/cordis.patch.yml/)
   assert.match(files[1], /\/cordis.patch.yml$/)
 })
+
+test('parses a CRLF patch file written on Windows', () => {
+  const text = '- insert:\r\n    - id: dsh-astryx\r\n      name: dsh-astryx\r\n      config:\r\n        ttlHours: 6\r\n'
+  const rows = parseRows(text, 'win')
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].id, 'dsh-astryx')
+  assert.equal(rows[0].name, 'dsh-astryx')
+  assert.equal(rows[0].disabled, false)
+})

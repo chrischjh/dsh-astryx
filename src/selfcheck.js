@@ -18,11 +18,8 @@ export class SelfCheck {
     this.makePatchScan = options.makePatchScan ?? (() => new PatchScan({
       files: this.paths.patchFiles?.length ? this.paths.patchFiles : discoverPatchFiles({ profileDir: this.paths.profileDir, home: this.paths.home }),
     }))
-    this.makeSkillCheck = options.makeSkillCheck ?? ((projectDir) => new SkillCheck({
-      dshSkills: this.paths.skills,
-      agentsSkills: this.paths.agentsSkills,
-      projectDir,
-    }))
+    const roots = this.paths.skillRoots ?? [{ id: 'dsh', path: this.paths.skills }]
+    this.makeSkillCheck = options.makeSkillCheck ?? ((projectDir) => new SkillCheck({ roots, projectDir }))
     this.now = options.now ?? (() => new Date())
   }
 

@@ -35,8 +35,10 @@ function makeCheck({ patch = '', commands = FULL_COMMANDS, cli = true, mcpResult
     contract,
     paths: {
       patchFiles: [patchFile],
-      skills: join(root, 'skills'),
-      agentsSkills: join(root, 'agents', 'skills'),
+      skillRoots: [
+        { id: 'dsh', path: join(root, 'skills') },
+        { id: 'agents', path: join(root, 'agents', 'skills') },
+      ],
     },
     makeProbe: probe,
     makeMcp: () => ({ probe: async () => mcpResult ?? { ok: false, tools: [], latencyMs: 0, error: 'no probe configured' } }),

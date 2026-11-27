@@ -2,26 +2,29 @@ import { existsSync, lstatSync, readFileSync, realpathSync, statSync } from 'nod
 import { join } from 'node:path'
 
 /**
- * Looks for the Astryx skill where Astryx writes it, and says whether DSH can
- * actually load it. A file in ~/.agents is not visible to DSH's catalog, which
- * is the difference between "installed" and "effective".
+ * Looks for the Astryx skill in the directories DSH loads skills from.
+ * DSH reads both `$DSH_HOME/skills` and the machine-level `~/.agents/skills`
+ * (verified: a skill placed only in the latter shows up in the catalog), so a
+ * file in either one is effective; project folders are reported but are not a
+ * machine-wide install.
  */
 export class SkillCheck {
-  constructor({ dshSkills = '', agentsSkills = '', projectDir = '' } = {}) {
-    this.dshSkills = dshSkills
-    this.agentsSkills = agentsSkills
+  constructor({ roots = [], projectDir = '' } = {}) {
+    this.roots = roots
     this.projectDir = projectDir
   }
 
   locations() {
-    const list = [
-      { id: 'dsh', path: join(this.dshSkills, 'astryx', 'SKILL.md'), visibleToDsh: true },
-      { id: 'computer', path: join(this.agentsSkills, 'astryx', 'SKILL.md'), visibleToDsh: false },
-    ]
+    const list = this.roots.map((root) => ({
+      id: root.id,
+      path: join(root.path, 'astryx', 'SKILL.md'),
+      visibleToDsh: true,
+      scope: 'machine',
+    }))
     if (this.projectDir) {
       list.push(
-        { id: 'project-agents', path: join(this.projectDir, '.agents', 'skills', 'astryx-project', 'SKILL.md'), visibleToDsh: false },
-        { id: 'project-claude', path: join(this.projectDir, '.claude', 'skills', 'astryx-project', 'SKILL.md'), visibleToDsh: false },
+        { id: 'project-agents', path: join(this.projectDir, '.agents', 'skills', 'astryx-project', 'SKILL.md'), visibleToDsh: false, scope: 'project' },
+        { id: 'project-claude', path: join(this.projectDir, '.claude', 'skills', 'astryx-project', 'SKILL.md'), visibleToDsh: false, scope: 'project' },
       )
     }
     return list
@@ -33,9 +36,9 @@ export class SkillCheck {
     const anyValid = locations.find((location) => location.exists && location.valid)
     let verdict = 'missing'
     if (effective) verdict = 'effective'
-    else if (anyValid && !anyValid.visibleToDsh) verdict = anyValid.id.startsWith('project') ? 'project-only' : 'invisible'
+    else if (anyValid) verdict = anyValid.scope === 'project' ? 'project-only' : 'invisible'
     else if (locations.some((location) => location.exists)) verdict = 'invalid'
-    return { verdict, effectivePath: effective?.path ?? '', locations }
+    return { verdict, effectivePath: effective?.path ?? '', roots: this.roots.map((root) => root.path), locations }
   }
 
   #inspectOne(location) {
@@ -67,11 +70,12 @@ export function readFrontmatter(path) {
   } catch {
     return { name: '', description: '' }
   }
-  if (!text.startsWith('---')) return { name: '', description: '' }
-  const end = text.indexOf('\n---', 3)
+  const normalized = text.replace(/\r\n?/g, '\n')
+  if (!normalized.startsWith('---')) return { name: '', description: '' }
+  const end = normalized.indexOf('\n---', 3)
   if (end === -1) return { name: '', description: '' }
-  const block = text.slice(3, end)
+  const block = normalized.slice(3, end)
   const name = /^name:\s*(.+)$/m.exec(block)?.[1]?.trim() ?? ''
   const description = /^description:\s*(.+)$/m.exec(block)?.[1]?.trim() ?? ''
-  return { name, description }
+  return { name: name.replace(/^['"]|['"]$/g, ''), description: description.replace(/^['"]|['"]$/g, '') }
 }

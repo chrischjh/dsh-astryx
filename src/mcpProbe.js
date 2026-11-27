@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { planSpawn } from './spawn.js'
 
 const PROTOCOL_VERSION = '2024-11-05'
 
@@ -10,6 +11,7 @@ export class McpProbe {
   constructor(options = {}) {
     this.spawnImpl = options.spawnImpl ?? spawn
     this.clientName = options.clientName ?? 'dsh-astryx'
+    this.platform = options.platform ?? process.platform
   }
 
   async probe({ command, args = [], env = {}, timeoutMs = 8000, retries = 2 } = {}) {
@@ -28,11 +30,13 @@ export class McpProbe {
       const started = Date.now()
       let child
       try {
-        child = this.spawnImpl(command, args, {
-          windowsHide: true,
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...process.env, ...env },
+        const plan = planSpawn({
+          file: command,
+          args,
+          platform: this.platform,
+          options: { stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, ...env } },
         })
+        child = this.spawnImpl(plan.file, plan.args, plan.options)
       } catch (error) {
         resolve({ ok: false, tools: [], latencyMs: 0, error: String(error?.message ?? error) })
         return

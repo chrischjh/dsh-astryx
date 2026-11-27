@@ -1,6 +1,6 @@
 {
   "name": "dsh-astryx",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Watches @astryxdesign (Astryx) releases and judges whether the newest Astryx is still compatible with this plugin's declared support contract, before an agent builds UI with it.",
   "type": "module",
   "license": "MIT",

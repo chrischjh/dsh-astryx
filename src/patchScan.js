@@ -41,10 +41,11 @@ export class PatchScan {
 
 export function parseRows(text, source = '') {
   const rows = []
+  const normalized = String(text ?? '').replace(/\r\n?/g, '\n')
   let row = null
   let inConfig = false
   let collectingArgs = false
-  for (const rawLine of text.split(/\r?\n/)) {
+  for (const rawLine of normalized.split('\n')) {
     const line = rawLine.replace(/\s+#.*$/, '')
     const idMatch = /^\s*-\s+id:\s*(.+)$/.exec(line)
     if (idMatch) {

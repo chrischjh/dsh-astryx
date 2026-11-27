@@ -116,6 +116,7 @@ function selfCheckTool(selfCheck, settings) {
           `cli: ${value.cli.found ? `${value.cli.via} ${value.cli.version}` : 'not installed'}${value.cli.missing.length ? ` missing ${value.cli.missing.join(',')}` : ''}`,
           `mcp: configured=${value.mcp.configured} (${value.mcp.basis}) reachable=${value.mcp.reachable} tools=${value.mcp.toolsCount}${value.mcp.error ? ` error=${value.mcp.error}` : ''}`,
           `skill: ${value.skill.verdict}${value.skill.effectivePath ? ` (${value.skill.effectivePath})` : ''}`,
+          `roots checked: ${value.skill.roots.join(', ') || '-'}`,
         ]
         return [{ type: 'text', text: lines.join('\n') }]
       },
@@ -211,16 +212,18 @@ function selfCheckSchema() {
         },
       },
       skill: {
-        type: 'object', additionalProperties: false, required: ['verdict', 'effectivePath', 'locations'],
+        type: 'object', additionalProperties: false, required: ['verdict', 'effectivePath', 'roots', 'locations'],
         properties: {
           verdict: { type: 'string' }, effectivePath: { type: 'string' },
+          roots: { type: 'array', items: { type: 'string' } },
           locations: {
             type: 'array',
             items: {
               type: 'object', additionalProperties: false,
-              required: ['id', 'path', 'visibleToDsh', 'exists', 'valid', 'name', 'description', 'link', 'bytes'],
+              required: ['id', 'path', 'visibleToDsh', 'scope', 'exists', 'valid', 'name', 'description', 'link', 'bytes'],
               properties: {
                 id: { type: 'string' }, path: { type: 'string' }, visibleToDsh: { type: 'boolean' },
+                scope: { type: 'string' },
                 exists: { type: 'boolean' }, valid: { type: 'boolean' }, name: { type: 'string' },
                 description: { type: 'string' }, link: { type: 'string' }, bytes: { type: 'number' },
               },

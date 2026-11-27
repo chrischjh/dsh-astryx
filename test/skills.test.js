@@ -17,50 +17,59 @@ function tree(files) {
 
 const VALID = '---\nname: astryx\ndescription: Build UI with Astryx.\n---\n\n# Astryx\n'
 
-test('effective when the skill sits in the DSH skill root', () => {
+function roots(root) {
+  return [
+    { id: 'dsh', path: join(root, 'skills') },
+    { id: 'agents', path: join(root, 'agents', 'skills') },
+  ]
+}
+
+test('effective in the DSH skill root', () => {
   const root = tree({ 'skills/astryx/SKILL.md': VALID })
-  const check = new SkillCheck({ dshSkills: join(root, 'skills'), agentsSkills: join(root, 'agents', 'skills') })
-  const result = check.inspect()
+  const result = new SkillCheck({ roots: roots(root) }).inspect()
   assert.equal(result.verdict, 'effective')
   assert.match(result.effectivePath, /skills\/astryx\/SKILL.md/)
-  const visible = result.locations.find((location) => location.id === 'dsh')
-  assert.equal(visible.visibleToDsh, true)
-  assert.equal(visible.valid, true)
-  assert.equal(visible.bytes > 0, true)
+  assert.equal(result.roots.length, 2)
+  const dsh = result.locations.find((location) => location.id === 'dsh')
+  assert.equal(dsh.visibleToDsh, true)
+  assert.equal(dsh.scope, 'machine')
+  assert.equal(dsh.bytes > 0, true)
 })
 
-test('invisible when it only exists where DSH cannot see it', () => {
+test('effective in ~/.agents/skills, which DSH also loads', () => {
   const root = tree({ 'agents/skills/astryx/SKILL.md': VALID })
-  const check = new SkillCheck({ dshSkills: join(root, 'skills'), agentsSkills: join(root, 'agents', 'skills') })
-  assert.equal(check.inspect().verdict, 'invisible')
+  const result = new SkillCheck({ roots: roots(root) }).inspect()
+  assert.equal(result.verdict, 'effective')
+  assert.match(result.effectivePath, /agents\/skills\/astryx\/SKILL.md/)
 })
 
 test('project-only for a project skill without a machine-wide copy', () => {
   const root = tree({ 'project/.agents/skills/astryx-project/SKILL.md': VALID })
-  const check = new SkillCheck({
-    dshSkills: join(root, 'skills'),
-    agentsSkills: join(root, 'agents', 'skills'),
-    projectDir: join(root, 'project'),
-  })
-  assert.equal(check.inspect().verdict, 'project-only')
+  const result = new SkillCheck({ roots: roots(root), projectDir: join(root, 'project') }).inspect()
+  assert.equal(result.verdict, 'project-only')
 })
 
 test('invalid when the frontmatter loses its description', () => {
   const root = tree({ 'skills/astryx/SKILL.md': '---\nname: astryx\n---\n' })
-  const check = new SkillCheck({ dshSkills: join(root, 'skills'), agentsSkills: join(root, 'agents', 'skills') })
-  const result = check.inspect()
+  const result = new SkillCheck({ roots: roots(root) }).inspect()
   assert.equal(result.verdict, 'invalid')
   assert.equal(result.locations.find((location) => location.id === 'dsh').valid, false)
 })
 
 test('missing when nothing is installed anywhere', () => {
-  const check = new SkillCheck({ dshSkills: '/nonexistent/skills', agentsSkills: '/nonexistent/agents' })
-  const result = check.inspect()
+  const result = new SkillCheck({ roots: [{ id: 'dsh', path: '/nonexistent/skills' }] }).inspect()
   assert.equal(result.verdict, 'missing')
   assert.ok(result.locations.every((location) => location.exists === false && location.bytes === 0))
 })
 
-test('readFrontmatter tolerates a file without frontmatter', () => {
+test('readFrontmatter tolerates files without frontmatter', () => {
   const root = tree({ 'plain/SKILL.md': '# no frontmatter\n' })
   assert.deepEqual(readFrontmatter(join(root, 'plain', 'SKILL.md')), { name: '', description: '' })
+})
+
+test('readFrontmatter survives CRLF and quoted values', () => {
+  const root = tree({ 'win/SKILL.md': '---\r\nname: astryx\r\ndescription: "Astryx on Windows."\r\n---\r\n\r\n# Astryx\r\n' })
+  const frontmatter = readFrontmatter(join(root, 'win', 'SKILL.md'))
+  assert.equal(frontmatter.name, 'astryx')
+  assert.equal(frontmatter.description, 'Astryx on Windows.')
 })

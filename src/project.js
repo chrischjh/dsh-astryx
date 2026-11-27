@@ -1,8 +1,12 @@
 import { spawn } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
+import { planSpawn } from './spawn.js'
+import { npmPrefixCandidates } from './npmPrefixes.js'
 
 const DEFAULT_PACKAGES = ['@astryxdesign/core', '@astryxdesign/cli']
+const CLI_PACKAGE = '@astryxdesign/cli'
+const CLI_ENTRY = ['clients', 'cli', 'bin', 'astryx.mjs']
 const MAX_JSON_BYTES = 4 * 1024 * 1024
 
 /** Finds a project that uses Astryx, reads its installed versions, and probes its CLI. */
@@ -10,8 +14,13 @@ export class ProjectProbe {
   constructor(options = {}) {
     this.startDir = resolve(options.startDir ?? process.cwd())
     this.spawnImpl = options.spawnImpl ?? spawn
+    this.platform = options.platform ?? process.platform
+    this.env = options.env ?? process.env
     this.packages = options.packages ?? DEFAULT_PACKAGES
-    this.cliPackage = options.cliPackage ?? '@astryxdesign/cli'
+    this.fallbackPrefixes = options.fallbackPrefixes ?? ['/usr/local', '/opt/homebrew', '/usr/local/lib/nodejs']
+    this.execPath = options.execPath ?? process.execPath
+    this.homeDir = options.homeDir ?? ''
+    this.npmPrefixes = options.npmPrefixes ?? null
   }
 
   locate() {
@@ -36,9 +45,74 @@ export class ProjectProbe {
     const fromModules = readInstalled(projectDir, this.packages)
     Object.assign(versions, fromModules)
     if (fromModules.source === 'node_modules') return versions
-    const fromManifest = readDeclared(join(projectDir, 'package.json'), this.packages)
-    Object.assign(versions, fromManifest)
+    Object.assign(versions, readDeclared(join(projectDir, 'package.json'), this.packages))
     return versions
+  }
+
+  /** Run order: the project's CLI, then any global install, then a PATH shim. */
+  cliCandidates(projectDir) {
+    const candidates = []
+    const projectEntry = projectDir ? join(projectDir, 'node_modules', CLI_PACKAGE, ...CLI_ENTRY) : ''
+    if (projectEntry && existsSync(projectEntry)) candidates.push(nodeScript('project-cli', projectEntry))
+    const globalEntry = this.findGlobalEntry()
+    if (globalEntry) candidates.push(nodeScript('global-cli', globalEntry))
+    const shim = this.findOnPath(this.shimNames())
+    if (shim) candidates.push({ via: 'global-shim', kind: 'shim', file: shim, args: ['manifest', '--json'] })
+    return candidates
+  }
+
+  /**
+   * npm puts a global package under `<prefix>/lib/node_modules` on POSIX and
+   * `<prefix>/node_modules` on Windows, and the `bin` dir that lands on PATH is
+   * `<prefix>/bin` or `<prefix>` respectively. PATH alone is unreliable (a GUI
+   * app inherits a short PATH, and macOS writes these into a versioned prefix),
+   * so walk the layouts instead of trusting `which`.
+   */
+  findGlobalEntry() {
+    for (const prefix of this.prefixCandidates()) {
+      for (const layout of [join('lib', 'node_modules'), 'node_modules']) {
+        const entry = join(prefix, layout, CLI_PACKAGE, ...CLI_ENTRY)
+        if (existsSync(entry)) return entry
+      }
+      const direct = join(prefix, CLI_PACKAGE, ...CLI_ENTRY)
+      if (existsSync(direct)) return direct
+    }
+    return ''
+  }
+
+  prefixCandidates() {
+    const prefixes = new Set(this.npmPrefixes ?? npmPrefixCandidates({ env: this.env, platform: this.platform, homeDir: this.homeDir }))
+    for (const dir of this.pathDirs()) {
+      prefixes.add(dir)
+      prefixes.add(dirname(dir))
+    }
+    if (this.execPath) {
+      prefixes.add(dirname(this.execPath))
+      prefixes.add(dirname(dirname(this.execPath)))
+    }
+    for (const fallback of this.fallbackPrefixes) prefixes.add(fallback)
+    return [...prefixes].filter((prefix) => prefix && existsSync(prefix))
+  }
+
+  pathDirs() {
+    const raw = String(this.env.PATH ?? '')
+    return raw.split(this.platform === 'win32' ? ';' : ':').filter(Boolean)
+  }
+
+  shimNames() {
+    if (this.platform !== 'win32') return ['astryx']
+    const extensions = (this.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD').split(';').filter(Boolean)
+    return ['astryx', ...extensions.map((extension) => `astryx${extension.toLowerCase()}`)]
+  }
+
+  findOnPath(names) {
+    for (const dir of this.pathDirs()) {
+      for (const name of names) {
+        const candidate = join(dir, name)
+        if (existsSync(candidate)) return candidate
+      }
+    }
+    return ''
   }
 
   async runCli({ projectDir, timeoutMs = 12000 } = {}) {
@@ -55,27 +129,18 @@ export class ProjectProbe {
         lastError = `${candidate.via}: ${String(error?.message ?? error)}`
       }
     }
-    return { ran: false, via: lastVia, version: '', commands: [], initFlags: [], error: lastError }
-  }
-
-  cliCandidates(projectDir) {
-    const candidates = []
-    const localBin = join(projectDir ?? '', 'node_modules', this.cliPackage, 'clients', 'cli', 'bin', 'astryx.mjs')
-    if (projectDir && existsSync(localBin)) {
-      candidates.push({ via: 'project-cli', file: process.execPath, args: [localBin, 'manifest', '--json'] })
-    }
-    const names = process.platform === 'win32' ? ['astryx.cmd', 'astryx'] : ['astryx']
-    const found = findOnPath(names)
-    if (found) candidates.push({ via: 'global-cli', file: found, args: ['manifest', '--json'] })
-    return candidates
+    return { ran: false, via: lastVia, version: '', commands: [], initFlags: '', error: lastError }
   }
 
   run(candidate, timeoutMs) {
+    const plan = planSpawn({
+      file: candidate.file,
+      args: candidate.args,
+      platform: this.platform,
+      options: { stdio: ['ignore', 'pipe', 'pipe'] },
+    })
     return new Promise((resolvePromise, reject) => {
-      const child = this.spawnImpl(candidate.file, candidate.args, {
-        windowsHide: true,
-        stdio: ['ignore', 'pipe', 'pipe'],
-      })
+      const child = this.spawnImpl(plan.file, plan.args, plan.options)
       let stdout = ''
       let stderr = ''
       const timer = setTimeout(() => {
@@ -101,6 +166,10 @@ export class ProjectProbe {
   }
 }
 
+function nodeScript(via, entry) {
+  return { via, kind: 'node-script', file: process.execPath, args: [entry, 'manifest', '--json'] }
+}
+
 function parseManifest(stdout) {
   let json
   try {
@@ -108,12 +177,13 @@ function parseManifest(stdout) {
   } catch {
     return null
   }
-  const commands = collectNames(json?.commands)
-  const initFlags = collectInitFlags(json)
-  return { version: String(json?.version ?? ''), commands, initFlags }
+  // Astryx answers with an envelope: { apiVersion, type, data: { version, commands } }.
+  const body = typeof json?.data === 'object' && json.data !== null ? json.data : json
+  return { version: String(body?.version ?? ''), commands: collectNames(body?.commands), initFlags: collectInitFlags(body) }
 }
 
 function collectNames(list, names = []) {
+  if (!Array.isArray(list) && list && typeof list === 'object') list = Object.values(list)
   if (!Array.isArray(list)) return names
   for (const entry of list) {
     if (typeof entry?.name === 'string') names.push(entry.name)
@@ -132,8 +202,7 @@ function collectInitFlags(json) {
     }
     if (Array.isArray(option?.flags)) flags.push(...option.flags.map(String))
   }
-  const text = flags.join(' ')
-  if (text.includes('--to')) return '--to'
+  if (flags.join(' ').includes('--to')) return '--to'
   return JSON.stringify(json).includes('"--to"') ? '--to' : ''
 }
 
@@ -153,7 +222,6 @@ function declaresAstryx(manifestPath, packages) {
   if (!manifest) return false
   const names = new Set(packages)
   const blocks = ['dependencies', 'devDependencies', 'peerDependencies']
-  if (Array.isArray(manifest.workspaces)) return false
   return blocks.some((block) => names.has(packageAt(manifest[block])))
 }
 
@@ -188,8 +256,7 @@ function readDeclared(manifestPath, packages) {
       if (name === '@astryxdesign/cli') versions.cli = cleaned
     }
   }
-  const any = versions.core || versions.cli
-  return any ? versions : { core: '', cli: '', source: 'none' }
+  return versions.core || versions.cli ? versions : { core: '', cli: '', source: 'none' }
 }
 
 function readManifest(path) {
@@ -198,16 +265,4 @@ function readManifest(path) {
   } catch {
     return null
   }
-}
-
-function findOnPath(names) {
-  const dirs = String(process.env.PATH ?? '').split(process.platform === 'win32' ? ';' : ':')
-  for (const dir of dirs) {
-    if (!dir) continue
-    for (const name of names) {
-      const candidate = join(dir, name)
-      if (existsSync(candidate)) return candidate
-    }
-  }
-  return ''
 }
