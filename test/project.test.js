@@ -6,6 +6,9 @@ import { tmpdir } from 'node:os'
 import { EventEmitter } from 'node:events'
 import { ProjectProbe } from '../src/project.js'
 
+const posix = (value) => String(value).replace(/\\/g, '/')
+
+
 const ENTRY = ['clients', 'cli', 'bin', 'astryx.mjs']
 
 function tree(files) {
@@ -87,7 +90,7 @@ test('global install resolves through the POSIX lib/node_modules layout', () => 
   const candidates = probe({ npmPrefixes: [prefix] }).cliCandidates('')
   assert.equal(candidates.length, 1)
   assert.equal(candidates[0].via, 'global-cli')
-  assert.match(candidates[0].args[0], /lib\/node_modules\/@astryxdesign/)
+  assert.match(posix(candidates[0].args[0]), /lib\/node_modules\/@astryxdesign/)
   assert.deepEqual(candidates[0].args.slice(1), ['manifest', '--json'])
 })
 
@@ -96,7 +99,7 @@ test('global install resolves through the Windows node_modules layout', () => {
   const candidates = probe({ platform: 'win32', npmPrefixes: [prefix] }).cliCandidates('')
   assert.equal(candidates.length, 1)
   assert.equal(candidates[0].via, 'global-cli')
-  assert.match(candidates[0].args[0], /node_modules\/@astryxdesign/)
+  assert.match(posix(candidates[0].args[0]), /node_modules\/@astryxdesign/)
 })
 
 test('a PATH shim is the last resort and keeps Windows quoting for later', () => {

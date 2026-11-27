@@ -5,6 +5,9 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { SkillCheck, readFrontmatter } from '../src/skills.js'
 
+const posix = (value) => String(value).replace(/\\/g, '/')
+
+
 function tree(files) {
   const dir = mkdtempSync(join(tmpdir(), 'dsh-astryx-skill-'))
   for (const [path, content] of Object.entries(files)) {
@@ -28,7 +31,7 @@ test('effective in the DSH skill root', () => {
   const root = tree({ 'skills/astryx/SKILL.md': VALID })
   const result = new SkillCheck({ roots: roots(root) }).inspect()
   assert.equal(result.verdict, 'effective')
-  assert.match(result.effectivePath, /skills\/astryx\/SKILL.md/)
+  assert.match(posix(result.effectivePath), /skills\/astryx\/SKILL.md/)
   assert.equal(result.roots.length, 2)
   const dsh = result.locations.find((location) => location.id === 'dsh')
   assert.equal(dsh.visibleToDsh, true)
@@ -40,7 +43,7 @@ test('effective in ~/.agents/skills, which DSH also loads', () => {
   const root = tree({ 'agents/skills/astryx/SKILL.md': VALID })
   const result = new SkillCheck({ roots: roots(root) }).inspect()
   assert.equal(result.verdict, 'effective')
-  assert.match(result.effectivePath, /agents\/skills\/astryx\/SKILL.md/)
+  assert.match(posix(result.effectivePath), /agents\/skills\/astryx\/SKILL.md/)
 })
 
 test('project-only for a project skill without a machine-wide copy', () => {

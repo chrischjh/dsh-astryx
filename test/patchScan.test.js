@@ -5,6 +5,9 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { discoverPatchFiles, parseRows, PatchScan } from '../src/patchScan.js'
 
+const posix = (value) => String(value).replace(/\\/g, '/')
+
+
 const HOME_PATCH = `
 - insert:
     - id: mcp-codegraph
@@ -78,8 +81,8 @@ test('discoverPatchFiles orders bundle patches before profile and home', () => {
   writeFileSync(join(root, 'home', 'cordis.patch.yml'), '- id: keep\n')
   const files = discoverPatchFiles({ profileDir, home: join(root, 'home') })
   assert.equal(files.length, 3)
-  assert.match(files[0], /@scope\/bundle\/cordis.patch.yml/)
-  assert.match(files[1], /profiles\/desktop\/cordis.patch.yml/)
+  assert.match(posix(files[0]), /@scope\/bundle\/cordis.patch.yml/)
+  assert.match(posix(files[1]), /profiles\/desktop\/cordis.patch.yml/)
   assert.match(files[2], /home\/cordis.patch.yml/)
 })
 
@@ -95,8 +98,8 @@ test('without DSH_PROFILE_DIR it picks the profile that owns the package', () =>
   writeFileSync(join(home, 'cordis.patch.yml'), '- id: home-row\n')
   const files = discoverPatchFiles({ home })
   assert.equal(files.length, 2)
-  assert.match(files[0], /profiles\/desktop\/node_modules\/dsh-astryx\/cordis.patch.yml/)
-  assert.match(files[1], /\/cordis.patch.yml$/)
+  assert.match(posix(files[0]), /profiles\/desktop\/node_modules\/dsh-astryx\/cordis.patch.yml/)
+  assert.match(posix(files[1]), /\/cordis.patch.yml$/)
 })
 
 test('parses a CRLF patch file written on Windows', () => {
