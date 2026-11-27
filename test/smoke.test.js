@@ -18,13 +18,13 @@ function fakeCtx() {
   }
 }
 
-test('activation registers both tools and one prompt section', () => {
+test('activation registers three tools and one prompt section', () => {
   const ctx = fakeCtx()
   apply(ctx, { checkOnStart: false })
   assert.equal(name, 'astryx')
-  assert.deepEqual(ctx.tools.map((tool) => tool.name), ['astryx_status', 'astryx_selfcheck'])
+  assert.deepEqual(ctx.tools.map((tool) => tool.name), ['astryx_status', 'astryx_setup', 'astryx_selfcheck'])
   assert.equal(ctx.sections.length, 1)
-  assert.equal(ctx.sections[0].name, 'astryx:compat')
+  assert.equal(ctx.sections[0].name, 'astryx:expert')
 })
 
 test('every tool declares a strict output contract', () => {
@@ -51,7 +51,7 @@ test('render functions work on a shape that satisfies their schema', () => {
 test('config falls back to safe defaults', () => {
   const ctx = fakeCtx()
   apply(ctx, { ttlHours: -1, registry: 42, checkOnStart: 'yes' })
-  assert.equal(ctx.tools.length, 2)
+  assert.equal(ctx.tools.length, 3)
 })
 
 function assertEveryRequiredKeyDeclared(schema, label) {

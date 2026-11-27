@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0
+
+The plugin now equips the agent instead of only reporting.
+
+- **Ships the Astryx skill.** `skills/astryx/SKILL.md` is vendored byte-identical from the CLI's computer-level skill and pinned by `skills.lock.json`; at activation it is registered on `ctx.skills` unless DSH already loads an Astryx skill (then the CLI copy wins and nothing is duplicated). `scripts/sync-skill.mjs` refreshes it, `--verify` fails on drift. The body carries the `astryx build → template → component` workflow and the naming rules (`label`, `is`/`has`, `value`/`onChange`).
+- **Expert posture in the prompt**: load the skill, look props up in the CLI, never invent a component API, never hand-roll a component Astryx ships.
+- **New tool `astryx_setup`**: project readiness — React 19, `@astryxdesign/core`, a theme package, the CLI, the `ASTRYX` agent-docs block, and the loaded skill, each with the fixing command.
+- **Client half**: one detail-page section with three cards (开发就绪 / 版本与兼容 / 接线自检) and a "立即检查" button each, backed by same-origin read-only routes (`POST /dsh-astryx/{setup,status,selfcheck}`, Origin checked, 64 KiB body cap, 60 s deadline).
+- **Renamed** to 「Astryx 前端助手」/ "Astryx Frontend Assistant" — the old title named an activity nobody could place.
+- Routes wait for the `webServer` service via `ctx.inject` (it mounts after bundle rows), so headless profiles degrade to tools only.
+
 ## 0.2.0
 
 Cross-platform rewrite, after running against a real global Astryx install.

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Astryx compatibility",
-    "description": "Checks @astryxdesign releases and reports whether the newest Astryx is still compatible with this plugin's support contract."
+    "title": "Astryx Frontend Assistant",
+    "description": "Build UI with Astryx out of the box: ships the Astryx skill (build \u2192 template \u2192 component workflow and naming rules), checks project readiness before the first page, and watches releases plus CLI/MCP/skill wiring."
   }
 }

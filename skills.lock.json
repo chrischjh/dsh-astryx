@@ -1,0 +1,10 @@
+{
+  "source": "astryx CLI 0.7.17 — astryx init --user (computer-level skill)",
+  "syncedAt": "2026-11-27",
+  "skills": {
+    "astryx": {
+      "path": "skills/astryx/SKILL.md",
+      "sha256": "5376cf9d0db6ef35f058348d2fa2fd30305be9e42c4585ba61de1f668fe61818"
+    }
+  }
+}

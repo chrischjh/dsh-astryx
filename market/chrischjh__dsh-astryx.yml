@@ -2,6 +2,6 @@ url: https://github.com/chrischjh/dsh-astryx
 name: chrischjh/dsh-astryx
 category: dev
 description:
-  en: 'Watches @astryxdesign releases and judges whether the newest Astryx still fits the plugin support contract, then self-checks the local wiring: the plugin row, the CLI surface via astryx manifest --json, a live Astryx MCP handshake, and whether the Astryx skill sits in a directory DSH actually loads. Read-only, cached, cross-platform.'
-  zh: '盯 @astryxdesign 的新版本并判断最新 Astryx 是否仍在插件的支持约定内，同时自检本地接线：插件行是否存活、CLI 面（astryx manifest --json）是否完整、Astryx MCP 能否真实握手、以及 Astryx 技能是否落在 DSH 真正会加载的目录里。只读、带缓存、跨平台。'
+  en: 'Build UI with Astryx out of the box: ships the Astryx skill (the build → template → component workflow and its prop-naming rules) so the agent can develop as an Astryx expert, checks project readiness before the first page (React 19, core, theme, CLI, agent-docs, skill), and watches releases plus CLI/MCP/skill wiring. Read-only.'
+  zh: '装上就用 Astryx 写前端：内置 Astryx 技能（build → template → component 工作流与属性命名约定），让 agent 以 Astryx 专家的方式开发；开工前体检项目就绪度（React 19、core、主题、CLI、AGENTS 指南块、技能），并守望新版本与 CLI/MCP/技能接线。只读。'
 icon: https://raw.githubusercontent.com/chrischjh/dsh-astryx/main/assets/icon-180.png

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Astryx 兼容性检查",
-    "description": "检查 @astryxdesign 的新版本，并判断最新 Astryx 是否仍与本插件的支持约定兼容。"
+    "title": "Astryx 前端助手",
+    "description": "装上就用 Astryx 写前端：内置 Astryx 技能（build → template → component 工作流与命名约定），开工前体检项目就绪度，并守望新版本与 CLI/MCP/技能接线。"
   }
 }
