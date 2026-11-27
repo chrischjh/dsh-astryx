@@ -83,7 +83,7 @@ test('discoverPatchFiles orders bundle patches before profile and home', () => {
   assert.equal(files.length, 3)
   assert.match(posix(files[0]), /@scope\/bundle\/cordis.patch.yml/)
   assert.match(posix(files[1]), /profiles\/desktop\/cordis.patch.yml/)
-  assert.match(files[2], /home\/cordis.patch.yml/)
+  assert.match(posix(files[2]), /home\/cordis.patch.yml/)
 })
 
 test('without DSH_PROFILE_DIR it picks the profile that owns the package', () => {
