@@ -1,0 +1,45 @@
+{
+  "name": "dsh-astryx",
+  "version": "0.1.0",
+  "description": "Watches @astryxdesign (Astryx) releases and judges whether the newest Astryx is still compatible with this plugin's declared support contract, before an agent builds UI with it.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./compat.json": "./compat.json"
+  },
+  "files": [
+    "index.js",
+    "src/",
+    "compat.json",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "cordis",
+    "astryx",
+    "design-system",
+    "compatibility"
+  ],
+  "dsh": {
+    "engines": {
+      "dsh": ">=0.2.2-rc.5 <0.3.0",
+      "node": ">=22.5.0"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

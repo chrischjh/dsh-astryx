@@ -1,0 +1,25 @@
+{
+  "testedAgainst": {
+    "core": "0.7.17",
+    "cli": "0.7.17"
+  },
+  "supported": {
+    "core": ">=0.7.0 <0.9.0",
+    "cli": ">=0.7.0 <0.9.0"
+  },
+  "requiredCommands": [
+    "docs",
+    "search",
+    "component",
+    "template",
+    "manifest",
+    "init",
+    "swizzle",
+    "upgrade",
+    "doctor"
+  ],
+  "requiredInitFlags": [
+    "--to"
+  ],
+  "note": "Bump supported + testedAgainst together when a release is verified. The required commands/flags are the surface this plugin tells agents to use; a probe that misses one means the guidance is stale even when the version number looks fine."
+}

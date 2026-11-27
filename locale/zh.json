@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Astryx 兼容性检查",
+    "description": "检查 @astryxdesign 的新版本，并判断最新 Astryx 是否仍与本插件的支持约定兼容。"
+  }
+}

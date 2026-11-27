@@ -1,0 +1,9 @@
+# dsh-astryx bundle patch: inserts the plugin into a profile's layer stack.
+# Row ids are namespaced with the package name so they cannot collide with other bundles.
+- insert:
+    - id: dsh-astryx
+      name: dsh-astryx
+      config:
+        ttlHours: 6
+        checkOnStart: true
+        registry: https://registry.npmjs.org

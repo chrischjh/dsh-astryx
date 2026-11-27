@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Astryx compatibility",
+    "description": "Checks @astryxdesign releases and reports whether the newest Astryx is still compatible with this plugin's support contract."
+  }
+}
