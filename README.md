@@ -105,12 +105,14 @@ Tests: `node --test test/` (75 cases, no network).
 
 Ready: `dsh.bundle.patch`, namespaced row id, icon, en/zh locale, README as the detail page, CI matrix.
 
-Before the catalog PR (one `data/plugins/<owner>__<repo>.yml` against `awesome-dsh-plugin`):
+The catalog entry is prepared at [`market/chrischjh__dsh-astryx.yml`](market/chrischjh__dsh-astryx.yml) — it is copied verbatim into `awesome-dsh-plugin` as `data/plugins/chrischjh__dsh-astryx.yml` (category `dev`, raster icon from `assets/`).
 
-1. Push this repo to GitHub and set `repository`, `homepage` and `bugs` in `package.json`.
-2. Add the `dsh-plugin` topic; the repo must be at least a day old.
-3. `npm publish` from a TTY so the OTP flow works, then verify `npm view dsh-astryx version`.
-4. Re-read the installed DSH version's bundle contract before releasing; ranges drift.
+Done: public repo, `repository`/`homepage`/`bugs`, `dsh-plugin` topic, green CI on three platforms, packed-tarball install verified.
+
+Still needs the account owner:
+
+1. `npm login`, then `npm publish` from a TTY so the OTP flow works; verify with `npm view dsh-astryx version`. The catalog picks up npm downloads automatically through the `repository` field, so there is no `npm:` key to add.
+2. The catalog PR once the repo is a day old (the project is new; a same-day submission reads as spam).
 
 ## Known limits
 
