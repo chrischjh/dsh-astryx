@@ -109,10 +109,9 @@ The catalog entry is prepared at [`market/chrischjh__dsh-astryx.yml`](market/chr
 
 Done: public repo, `repository`/`homepage`/`bugs`, `dsh-plugin` topic, green CI on three platforms, packed-tarball install verified.
 
-Still needs the account owner:
+Done: `npm publish` (2FA web-auth through the browser) — `dsh-astryx@0.2.0` is live and the registry picked up `repository`, so npm download counts attach to the listing automatically.
 
-1. `npm login`, then `npm publish` from a TTY so the OTP flow works; verify with `npm view dsh-astryx version`. The catalog picks up npm downloads automatically through the `repository` field, so there is no `npm:` key to add.
-2. The catalog PR once the repo is a day old (the project is new; a same-day submission reads as spam).
+Still pending: the catalog PR, once the repo is a day old (the project is new; a same-day submission reads as spam). The entry is ready to copy verbatim into `awesome-dsh-plugin` as `data/plugins/chrischjh__dsh-astryx.yml`.
 
 ## Known limits
 
